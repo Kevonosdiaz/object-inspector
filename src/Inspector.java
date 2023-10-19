@@ -100,6 +100,6 @@ public class Inspector {
     }
 
     private Class<?> inspectClass(Class<?> classObj) {
-
+        return null;
     }
 }
