@@ -1,8 +1,12 @@
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InaccessibleObjectException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
+
+/**
+ * Goal of the program
+ */
 
 public class Inspector {
     private static final HashSet<String> seen = new HashSet<>(); // Store name of already seen classes
@@ -20,57 +24,82 @@ public class Inspector {
         String superClassName = superClass.getName();
         System.out.println("Superclass:\t" + superClassName); // May be "void" (?)
 
-        // Name of interfaces
+        // Name of interface(s)
         Class<?>[] interfaces = classObj.getInterfaces();
         System.out.println("Interfaces:\n");
         for (Class<?> inf : interfaces) {
             System.out.println("\t" + inf.getName());
         }
-        System.out.println("\n");
+        System.out.print("\n");
 
         // Methods
         Method[] methods = classObj.getDeclaredMethods();
-        System.out.println("Methods:\n");
+        System.out.println("Methods:");
 
+        // TODO Refactor with Extract Method + consider string builder?
         for (Method method : methods) {
             try {
                 method.setAccessible(true);
                 System.out.println("\t‣" + method.getName());
                 System.out.println("\t\t‣Exceptions Thrown:");
-                Class[] exceptions = method.getExceptionTypes();
+                Class<?>[] exceptions = method.getExceptionTypes();
                 for (Class<?> exception : exceptions) {
                     System.out.println("\t\t\t" + exception.getName());
                 }
 
-                System.out.print("\t\t‣Parameter Types: (");
-                Class[] params = method.getParameterTypes()
+                // TODO ensure that the parameter type is easily readable (map types/classes to primitive spelling?)
+
+                System.out.print("\t\t‣Parameter Types: ( ");
+                Class<?>[] params = method.getParameterTypes();
+                for (Class<?> param : params) {
+                    System.out.print(param.getName() + " ");
+                }
                 System.out.println(")");
+
                 // Return type
-                System.out.println("\t\t‣Return Type: ");
+                System.out.print("\t\t‣Return Type: ");
                 System.out.println(method.getReturnType().getName());
                 // Modifiers
                 int mod = method.getModifiers();
-                System.out.println(Modifier.toString(mod));
+                System.out.println("\t‣Modifiers: " + Modifier.toString(mod));
             } catch (InaccessibleObjectException e) {
                 System.out.println("Method not accessible");
             }
-            ;
         }
 
-        // Consider using a separate method for this
-
+        // TODO add in try/catch block, consider Extracting Method if too long
         // Constructors
+        Constructor<?>[] constructors = classObj.getConstructors();
+        System.out.println("Constructors:");
+        for (Constructor<?> constructor : constructors) {
+            // Name
+            System.out.println("\t‣Name: " + constructor.getName());
 
+            // Parameters
+            System.out.print("\t‣Parameter Types: ( ");
+            Class<?>[] params = constructor.getParameterTypes();
+            for (Class<?> param : params) {
+                System.out.print(param.getName() + " ");
+            }
+            System.out.println(")");
+
+            // Modifiers
+            int mod = constructor.getModifiers();
+            System.out.println("\t‣Modifiers: " + Modifier.toString(mod));
+        }
 
         // Fields
         // Consider using a separate method for this
 
 
-        // Check recursive flag
-
-
+        // Check recursive flag, or otherwise just use .toString()
+        // Dequeue?
 
 
         seen.add(className);
+    }
+
+    private Class<?> inspectClass(Class<?> classObj) {
+
     }
 }
