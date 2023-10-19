@@ -1,4 +1,4 @@
-/*==========================================================================
+package Asst2_test_driver;/*==========================================================================
 File: Asst2TestDriver.java
 Purpose: Driver program that loads the objects inspector and runs the
          tests. Verification of tests is done through the inspection
@@ -34,7 +34,7 @@ public class Asst2TestDriver
 	    }
 	catch(Exception e) 
 	    {
-		throw new Exception("Unable create instance of your object inspector");
+		throw new Exception("Unable create instance of your object inspector: " + e);
 	    }
 
 	// get reference to inspect method

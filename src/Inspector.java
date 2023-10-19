@@ -9,6 +9,8 @@ import java.util.HashSet;
  */
 
 public class Inspector {
+    public Inspector() {}
+
     private static final HashSet<String> seen = new HashSet<>(); // Store name of already seen classes
     public void inspect(Object obj, boolean recursive) {
         Class<?> classObj = obj.getClass();
@@ -17,20 +19,23 @@ public class Inspector {
         if (className.startsWith("java.lang") || seen.contains(className)) return;
 
         // Name of declaring class
-        System.out.println("Declaring Class:\t" + className);
+        System.out.println("Declaring Class: " + className);
 
         // Name of superclass
         Class<?> superClass = classObj.getSuperclass();
         String superClassName = superClass.getName();
-        System.out.println("Superclass:\t" + superClassName); // May be "void" (?)
+        System.out.println("Superclass:\t " + superClassName); // May be "void" (?)
 
         // Name of interface(s)
         Class<?>[] interfaces = classObj.getInterfaces();
-        System.out.println("Interfaces:\n");
-        for (Class<?> inf : interfaces) {
-            System.out.println("\t" + inf.getName());
+        if (interfaces.length == 0) {
+            System.out.println("Interfaces: None");
+        } else {
+            System.out.println("Interfaces:");
+            for (Class<?> inf : interfaces) {
+                System.out.println("\t- " + inf.getName());
+            }
         }
-        System.out.print("\n");
 
         // Methods
         Method[] methods = classObj.getDeclaredMethods();
@@ -40,8 +45,9 @@ public class Inspector {
         for (Method method : methods) {
             try {
                 method.setAccessible(true);
-                System.out.println("\t‣" + method.getName());
-                System.out.println("\t\t‣Exceptions Thrown:");
+                System.out.println("\t-" + method.getName());
+                // Use if else or ? for formatting when list size 0
+                System.out.println("\t\t-Exceptions Thrown:");
                 Class<?>[] exceptions = method.getExceptionTypes();
                 for (Class<?> exception : exceptions) {
                     System.out.println("\t\t\t" + exception.getName());
@@ -49,7 +55,7 @@ public class Inspector {
 
                 // TODO ensure that the parameter type is easily readable (map types/classes to primitive spelling?)
 
-                System.out.print("\t\t‣Parameter Types: ( ");
+                System.out.print("\t\t-Parameter Types: ( ");
                 Class<?>[] params = method.getParameterTypes();
                 for (Class<?> param : params) {
                     System.out.print(param.getName() + " ");
@@ -57,11 +63,11 @@ public class Inspector {
                 System.out.println(")");
 
                 // Return type
-                System.out.print("\t\t‣Return Type: ");
+                System.out.print("\t\t-Return Type: ");
                 System.out.println(method.getReturnType().getName());
                 // Modifiers
                 int mod = method.getModifiers();
-                System.out.println("\t‣Modifiers: " + Modifier.toString(mod));
+                System.out.println("\t\t-Modifiers: " + Modifier.toString(mod));
             } catch (InaccessibleObjectException e) {
                 System.out.println("Method not accessible");
             }
@@ -73,10 +79,10 @@ public class Inspector {
         System.out.println("Constructors:");
         for (Constructor<?> constructor : constructors) {
             // Name
-            System.out.println("\t‣Name: " + constructor.getName());
+            System.out.println("- Name: " + constructor.getName());
 
             // Parameters
-            System.out.print("\t‣Parameter Types: ( ");
+            System.out.print("\t- Parameter Types: ( ");
             Class<?>[] params = constructor.getParameterTypes();
             for (Class<?> param : params) {
                 System.out.print(param.getName() + " ");
@@ -85,7 +91,7 @@ public class Inspector {
 
             // Modifiers
             int mod = constructor.getModifiers();
-            System.out.println("\t‣Modifiers: " + Modifier.toString(mod));
+            System.out.println("\t- Modifiers: " + Modifier.toString(mod) + "\n");
         }
 
         // Fields
