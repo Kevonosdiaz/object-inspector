@@ -3,20 +3,31 @@ import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 /**
- * Goal of the program
+ * Inspector class uses reflective techniques to introspect and print
+ * details of a given object passed into inspect().
+ * Repeated objects will be skipped.
  */
+// TODO Do we need to add superclasses into seen?
+    // Would be safer in case a superclass instance is present as a field (?)
 
 public class Inspector {
     public Inspector() {}
-
     private static final HashSet<String> seen = new HashSet<>(); // Store name of already seen classes
+    private static final LinkedList<Class<?>> traversalQueue = new LinkedList<>();
+
     public void inspect(Object obj, boolean recursive) {
+        final String EXCLUDE_NAME = "java";
         Class<?> classObj = obj.getClass();
         String className = classObj.getName();
+
         // Stop once we get to Object level, or if we've already inspected this class
-        if (className.startsWith("java.lang") || seen.contains(className)) return;
+        if (className.startsWith(EXCLUDE_NAME) || seen.contains(className)) return;
+
+        // inspectClass(classObj);
+        // Handle current field values and recursion (consider making inspect() a "driver"?)
 
         // Name of declaring class
         System.out.println("Declaring Class: " + className);
@@ -24,7 +35,8 @@ public class Inspector {
         // Name of superclass
         Class<?> superClass = classObj.getSuperclass();
         String superClassName = superClass.getName();
-        System.out.println("Superclass:\t " + superClassName); // May be "void" (?)
+        if (!seen.contains(superClassName)) traversalQueue.add(superClass);
+        System.out.println("Superclass: " + superClassName); // May be "void" (?)
 
         // Name of interface(s)
         Class<?>[] interfaces = classObj.getInterfaces();
@@ -45,29 +57,37 @@ public class Inspector {
         for (Method method : methods) {
             try {
                 method.setAccessible(true);
-                System.out.println("\t-" + method.getName());
-                // Use if else or ? for formatting when list size 0
-                System.out.println("\t\t-Exceptions Thrown:");
+                // if (method.getName().startsWith(EXCLUDE_NAME)) continue;
+                System.out.println("\t- " + method.getName());
                 Class<?>[] exceptions = method.getExceptionTypes();
-                for (Class<?> exception : exceptions) {
-                    System.out.println("\t\t\t" + exception.getName());
+                if (exceptions.length == 0) {
+                    System.out.println("\t\t- Exceptions Thrown: None");
+                } else {
+                    System.out.println("\t\t- Exceptions Thrown:");
+                    for (Class<?> exception : exceptions) {
+                        System.out.println("\t\t\t- " + exception.getName());
+                    }
                 }
 
                 // TODO ensure that the parameter type is easily readable (map types/classes to primitive spelling?)
-
-                System.out.print("\t\t-Parameter Types: ( ");
+                // TODO reformat so it becomes a comma separated list rather than using spaces
                 Class<?>[] params = method.getParameterTypes();
-                for (Class<?> param : params) {
-                    System.out.print(param.getName() + " ");
+                if (params.length == 0) {
+                    System.out.println("\t\t- Parameter Types: None");
+                } else {
+                    System.out.print("\t\t- Parameter Types: (");
+                    for (int i = 0; i < params.length-2; i++) {
+                        System.out.print(params[i].getName() + ", ");
+                    }
+                    System.out.println(params[params.length-1].getName() + ")");
                 }
-                System.out.println(")");
 
                 // Return type
-                System.out.print("\t\t-Return Type: ");
+                System.out.print("\t\t- Return Type: ");
                 System.out.println(method.getReturnType().getName());
                 // Modifiers
                 int mod = method.getModifiers();
-                System.out.println("\t\t-Modifiers: " + Modifier.toString(mod));
+                System.out.println("\t\t- Modifiers: " + Modifier.toString(mod));
             } catch (InaccessibleObjectException e) {
                 System.out.println("Method not accessible");
             }
@@ -97,7 +117,7 @@ public class Inspector {
         // Fields
         // Consider using a separate method for this
 
-
+        // Current values of fields (specific to object)
         // Check recursive flag, or otherwise just use .toString()
         // Dequeue?
 
@@ -105,7 +125,6 @@ public class Inspector {
         seen.add(className);
     }
 
-    private Class<?> inspectClass(Class<?> classObj) {
-        return null;
-    }
+    // Will print all details of a class
+    private void inspectClass(Class<?> classObj) {}
 }
