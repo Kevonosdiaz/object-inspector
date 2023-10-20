@@ -1,7 +1,4 @@
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InaccessibleObjectException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -26,9 +23,22 @@ public class Inspector {
         // Stop once we get to Object level, or if we've already inspected this class
         if (className.startsWith(EXCLUDE_NAME) || seen.contains(className)) return;
 
-        // inspectClass(classObj);
-        // Handle current field values and recursion (consider making inspect() a "driver"?)
+        // Print details of class with other method
+        inspectClass(classObj);
 
+        // Print details of interface(s)/superclass(es) up the hierarchy
+        while (!traversalQueue.isEmpty()) {
+            inspectClass(traversalQueue.removeLast());
+        }
+
+        
+        // Current values of fields (specific to object)
+        // Check recursive flag, or otherwise just use .toString()
+        // Dequeue?
+    }
+
+    private static void inspectClass(Class<?> classObj) {
+        String className = classObj.getName();
         // Name of declaring class
         System.out.println("Declaring Class: " + className);
 
@@ -53,11 +63,9 @@ public class Inspector {
         Method[] methods = classObj.getDeclaredMethods();
         System.out.println("Methods:");
 
-        // TODO Refactor with Extract Method + consider string builder?
         for (Method method : methods) {
             try {
                 method.setAccessible(true);
-                // if (method.getName().startsWith(EXCLUDE_NAME)) continue;
                 System.out.println("\t- " + method.getName());
                 Class<?>[] exceptions = method.getExceptionTypes();
                 if (exceptions.length == 0) {
@@ -93,38 +101,52 @@ public class Inspector {
             }
         }
 
-        // TODO add in try/catch block, consider Extracting Method if too long
         // Constructors
         Constructor<?>[] constructors = classObj.getConstructors();
-        System.out.println("Constructors:");
-        for (Constructor<?> constructor : constructors) {
-            // Name
-            System.out.println("- Name: " + constructor.getName());
+        try {
+            System.out.println("Constructors:");
+            for (Constructor<?> constructor : constructors) {
+                constructor.setAccessible(true);
 
-            // Parameters
-            System.out.print("\t- Parameter Types: ( ");
-            Class<?>[] params = constructor.getParameterTypes();
-            for (Class<?> param : params) {
-                System.out.print(param.getName() + " ");
+                // Name
+                System.out.println("- Name: " + constructor.getName());
+
+                // Parameters
+                System.out.print("\t- Parameter Types: ( ");
+                Class<?>[] params = constructor.getParameterTypes();
+                for (Class<?> param : params) {
+                    System.out.print(param.getName() + " ");
+                }
+                System.out.println(")");
+
+                // Modifiers
+                int mod = constructor.getModifiers();
+                System.out.println("\t- Modifiers: " + Modifier.toString(mod) + "\n");
             }
-            System.out.println(")");
-
-            // Modifiers
-            int mod = constructor.getModifiers();
-            System.out.println("\t- Modifiers: " + Modifier.toString(mod) + "\n");
+        } catch (InaccessibleObjectException e) {
+            System.out.println("Constructor not accessible");
         }
 
         // Fields
-        // Consider using a separate method for this
+        Field[] fields = classObj.getDeclaredFields();
+        System.out.println("Methods:");
 
-        // Current values of fields (specific to object)
-        // Check recursive flag, or otherwise just use .toString()
-        // Dequeue?
+        for (Field field : fields ) {
+            try {
+                field.setAccessible(true);
+                System.out.println("\t- " + field.getName());
 
+                // Field type
+                System.out.print("\t\t- Field Type: ");
+                System.out.println(field.getType().getName());
+                // Modifiers
+                int mod = field.getModifiers();
+                System.out.println("\t\t- Modifiers: " + Modifier.toString(mod));
+            } catch (InaccessibleObjectException e) {
+                System.out.println("Field not accessible");
+            }
+        }
 
         seen.add(className);
     }
-
-    // Will print all details of a class
-    private void inspectClass(Class<?> classObj) {}
 }
